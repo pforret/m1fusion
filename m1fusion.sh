@@ -128,6 +128,7 @@ do_install() {
   # Check if Homebrew is installed
   if [[ -z $(command -v brew) ]] ; then
     IO:alert "You will need Homebrew package manager to continue"
+    # shellcheck disable=SC2016
     IO:die 'Please execute: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
   fi
 
@@ -148,6 +149,7 @@ do_install() {
   IO:announce "Prepare virtual environment"
   mkdir -p models/ldm/stable-diffusion-v1/
   python3 -m pip install virtualenv
+  # shellcheck disable=SC1091
   [[ -f venv/bin/activate ]] && source venv/bin/activate
 
   brew install -q Cmake protobuf rust
@@ -178,8 +180,10 @@ do_install() {
 }
 
 do_image() {
+    # shellcheck disable=SC2154
   IO:log "image $prompt"
   pushd stable-diffusion || IO:die "Need stable-diffusion folder (did you run '$0 install' already?)"
+    # shellcheck disable=SC2154
   case "$style" in
     "photo")  prompt="$prompt. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd";;
     "cinema")  prompt="$prompt. cinematic photo, highly detailed, cinematic lighting, ultra-detailed, ultrarealistic, photorealism, 8k, octane render";;
