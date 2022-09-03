@@ -148,7 +148,7 @@ do_install() {
   IO:announce "Prepare virtual environment"
   mkdir -p models/ldm/stable-diffusion-v1/
   python3 -m pip install virtualenv
-  source venv/bin/activate
+  [[ -f venv/bin/activate ]] && source venv/bin/activate
 
   brew install -q Cmake protobuf rust
   pip3 install setuptools-rust
@@ -173,7 +173,7 @@ do_install() {
   IO:announce "Now running your first test AI image generation"
   python3 scripts/txt2img.py --n_samples 1 --n_iter 1 --plms --prompt "new born baby kitten. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd"
   open outputs/txt2img-samples
-  popd
+  popd || exit
 
 }
 
@@ -185,13 +185,11 @@ do_image() {
     "cinema")  prompt="$prompt. cinematic photo, highly detailed, cinematic lighting, ultra-detailed, ultrarealistic, photorealism, 8k, octane render";;
     "comic")  prompt="$prompt. highly detailed, ultra-detailed, comic, drawing, hand-drawn";;
     "bnw")  prompt="$prompt. Monochrome, black and white, gray, grey, bnw, desaturated, no color, Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd";;
-
-
   esac
   IO:debug "Prompt is: '$prompt'"
   python3 scripts/txt2img.py --n_samples 1 --n_iter 1 --plms --prompt "$prompt"
   open outputs/txt2img-samples
-  popd
+  popd || exit
 
 }
 
