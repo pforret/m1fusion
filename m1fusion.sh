@@ -51,8 +51,9 @@ flag|v|verbose|also show debug messages
 flag|f|force|do not ask for confirmation (always yes)
 option|l|log_dir|folder for log files |$HOME/log/$script_prefix
 option|t|tmp_dir|folder for temp files|/tmp/$script_prefix
-choice|1|action|action to perform|action1,action2,check,env,update
-#param|?|input|input file/text
+option|s|style|image style: photo/manga/comic|
+choice|1|action|action to perform|install,image,check,env,update
+param|?|prompt|prompt
 " grep -v -e '^#' -e '^\s*$'
 }
 
@@ -64,19 +65,20 @@ Script:main() {
   IO:log "[$script_basename] $script_version started"
 
   Os:require "awk"
+  model_ckpt="models/ldm/stable-diffusion-v1/model.ckpt"
 
   action=$(Str:lower "$action")
   case $action in
-  action1)
-    #TIP: use «$script_prefix action1» to ...
-    #TIP:> $script_prefix action1
-    do_action1
+  install)
+    #TIP: use «$script_prefix install» to ...
+    #TIP:> $script_prefix install
+    do_install
     ;;
 
-  action2)
-    #TIP: use «$script_prefix action2» to ...
-    #TIP:> $script_prefix action2
-    do_action2
+  image)
+    #TIP: use «$script_prefix image» to ...
+    #TIP:> $script_prefix image
+    do_image "$prompt"
     ;;
 
   check | env)
@@ -101,25 +103,95 @@ Script:main() {
   esac
   IO:log "[$script_basename] ended after $SECONDS secs"
   #TIP: >>> bash script created with «pforret/bashew»
-  #TIP: >>> for bash development, also check IO:print «pforret/setver» and «pforret/IO:progressbar»
+  #TIP: >>> for bash development, also check IO:print «pforret/setver» and «pforret/progressbar»
 }
 
 #####################################################################
 ## Put your helper scripts here
 #####################################################################
 
-do_action1() {
-  IO:log "action1"
-  # Examples of required binaries/scripts and how to install them
-  # Os:require "ffmpeg"
-  # Os:require "convert" "imagemagick"
-  # Os:require "IO:progressbar" "basher install pforret/IO:progressbar"
-  # (code)
+do_install() {
+  IO:log "install Stable Diffusion on MacOS"
+  # based on https://twitter.com/levelsio/status/1565731907664478209
+
+  # check if on MacOS
+  [[ ! "$os_kernel" == "Darwin" ]] && IO:die "Sorry, this script only works on MacOS (Apple)"
+  [[ ! "$os_machine" == "arm64" ]] && IO:die "Sorry, this script only works on MacOS M1 or M2 (ARM) processors"
+
+  # Check if MacOS is up to date
+  if [[ "$os_version" < "12.5.1" ]] ; then
+    IO:alert "Your current MacOS version is $os_version"
+    IO:alert "Stable Diffusion needs at least 12.5.1 (Monterey)"
+    IO:die "Please upgrade your MacOS using 'About This Mac' (top left)"
+  fi
+
+  # Check if Homebrew is installed
+  if [[ -z $(command -v brew) ]] ; then
+    IO:alert "You will need Homebrew package manager to continue"
+    IO:die 'Please execute: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+  fi
+
+  IO:announce "Update Homebrew package list"
+  brew update
+
+  if [[ -z "$(command -v python3)" ]] ; then
+    IO:announce "Install Python 3"
+    brew install python
+  fi
+
+  if [[ ! -d "stable-diffusion"  ]] ; then
+    IO:announce "Install Stable Diffusion for MacOS M1"
+    git clone -b apple-silicon-mps-support https://github.com/bfirsh/stable-diffusion.git
+  fi
+
+  pushd "stable-diffusion" || IO:die "Git repo for stable-diffusion not found"
+  IO:announce "Prepare virtual environment"
+  mkdir -p models/ldm/stable-diffusion-v1/
+  python3 -m pip install virtualenv
+  source venv/bin/activate
+
+  brew install -q Cmake protobuf rust
+  pip3 install setuptools-rust
+  IO:announce "Setup Python project"
+  if [[ ! -f requirements.installation.log ]] ; then
+    pip install -r requirements.txt > requirements.installation.log
+  fi
+
+  if [[ ! -f "$model_ckpt" ]] ; then
+    IO:alert "You need the actual AI model (4GB) saved as $model_ckpt"
+    if [[ -f "$HOME/Downloads/sd-v1-4.ckpt" ]] ; then
+      IO:alert "There is a sd-v1-4.ckpt in your Downloads folder, now mloving it to the right place"
+      mv "$HOME/Downloads/sd-v1-4.ckpt" "$model_ckpt"
+    else
+      IO:alert "You need to register at https://huggingface.co/CompVis/stable-diffusion-v-1-4-original"
+      IO:die "Please download sd-v1-4.ckpt and save it as $model_ckpt"
+    fi
+  else
+    IO:announce "Model model.ckpt found! $(du -h "$model_ckpt")"
+  fi
+
+  IO:announce "Now running your first test AI image generation"
+  python3 scripts/txt2img.py --n_samples 1 --n_iter 1 --plms --prompt "new born baby kitten. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd"
+  open outputs/txt2img-samples
+  popd
+
 }
 
-do_action2() {
-  IO:log "action2"
-  # (code)
+do_image() {
+  IO:log "image $prompt"
+  pushd stable-diffusion || IO:die "Need stable-diffusion folder (did you run '$0 install' already?)"
+  case "$style" in
+    "photo")  prompt="$prompt. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd";;
+    "cinema")  prompt="$prompt. cinematic photo, highly detailed, cinematic lighting, ultra-detailed, ultrarealistic, photorealism, 8k, octane render";;
+    "comic")  prompt="$prompt. highly detailed, ultra-detailed, comic, drawing, hand-drawn";;
+    "bnw")  prompt="$prompt. Monochrome, black and white, gray, grey, bnw, desaturated, no color, Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd";;
+
+
+  esac
+  IO:debug "Prompt is: '$prompt'"
+  python3 scripts/txt2img.py --n_samples 1 --n_iter 1 --plms --prompt "$prompt"
+  open outputs/txt2img-samples
+  popd
 
 }
 
@@ -840,10 +912,6 @@ function Os:beep(){
 function Script:meta() {
   local git_repo_remote=""
   local git_repo_root=""
-  local os_kernel=""
-  local os_machine=""
-  local os_name=""
-  local os_version=""
   local script_hash="?"
   local script_lines="?"
   local shell_brand=""
