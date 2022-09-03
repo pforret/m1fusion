@@ -6,11 +6,11 @@
 ### 3. implement helper functions you defined in previous step
 ### ==============================================================================
 
-### Created by author_name ( author_username ) on meta_today
-### Based on https://github.com/pforret/bashew bashew_version
+### Created by Peter Forret ( pforret ) on 2022-09-03
+### Based on https://github.com/pforret/bashew 1.18.8
 script_version="0.0.1" # if there is a VERSION.md in this script's folder, it will take priority for version number
-readonly script_author="author@email.com"
-readonly script_created="meta_today"
+readonly script_author="peter@forret.com"
+readonly script_created="2022-09-03"
 readonly run_as_root=-1 # run_as_root: 0 = don't check anything / 1 = script MUST run as root / -1 = script MAY NOT run as root
 
 ## some initialisation
@@ -499,7 +499,7 @@ Script:check() {
 Option:usage() {
   IO:print "Program : ${txtInfo}$script_basename${txtReset}  by ${txtWarn}$script_author${txtReset}"
   IO:print "Version : ${txtInfo}v$script_version${txtReset} (${txtWarn}$script_modified${txtReset})"
-  IO:print "Purpose : ${txtInfo}package_description${txtReset}"
+  IO:print "Purpose : ${txtInfo}Stable Diffusion for MacOS M1${txtReset}"
   echo -n  "Usage   : $script_basename"
   Option:config |
     awk '

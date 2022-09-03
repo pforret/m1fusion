@@ -1,6 +1,0 @@
-log
-.tmp
-*.tmp
-.env
-.idea
-vendor
