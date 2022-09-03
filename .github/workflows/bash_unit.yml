@@ -1,0 +1,36 @@
+name: bash_unit CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    if: "! contains(toJSON(github.event.commits.*.message), '[skip ci]')"
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Check for basic execution
+      run: ls ./*.sh | xargs bash
+
+    - name: Unit testing with bash_unit
+      run: curl https://raw.githubusercontent.com/pgrange/bash_unit/master/bash_unit -o tests/bash_unit && chmod +x tests/bash_unit && tests/bash_unit tests/test_*
+
+  macos:
+    runs-on: macos-latest
+    if: "! contains(toJSON(github.event.commits.*.message), '[skip ci]') && contains(toJSON(github.event.commits.*.message), '[macos]')"
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: install MacOS dependencies with brew install
+      run: brew install gawk
+
+    - name: Check for basic execution
+      run: ls ./*.sh | xargs bash
+
+    - name: Unit testing with bash_unit
+      run: curl https://raw.githubusercontent.com/pgrange/bash_unit/master/bash_unit -o tests/bash_unit && chmod +x tests/bash_unit && tests/bash_unit tests/test_*
