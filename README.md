@@ -51,6 +51,8 @@ or with `git`
 
 ## 📝 Acknowledgements
 
+* StableDiffusion: [huggingface.co/spaces/stabilityai/stable-diffusion](https://huggingface.co/spaces/stabilityai/stable-diffusion) by [stability.ai](https://stability.ai/)
+* Apple M1 instructions compiled by Pieter Levels [twitter.com/levelsio/status/1565731907664478209](https://twitter.com/levelsio/status/1565731907664478209)
 * script created with [bashew](https://github.com/pforret/bashew)
 
 &copy; 2022 Peter Forret

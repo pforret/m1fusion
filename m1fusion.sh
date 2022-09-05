@@ -51,7 +51,10 @@ flag|v|verbose|also show debug messages
 flag|f|force|do not ask for confirmation (always yes)
 option|l|log_dir|folder for log files |$HOME/log/$script_prefix
 option|t|tmp_dir|folder for temp files|/tmp/$script_prefix
-option|s|style|image style: photo/manga/comic|
+option|S|style|image style: photo/manga/comic|
+option|W|width|output image width (max 512)|512
+option|H|height|output image height (max 512)|512
+option|N|steps|number of time steps|50
 choice|1|action|action to perform|install,image,check,env,update
 param|?|prompt|prompt
 " grep -v -e '^#' -e '^\s*$'
@@ -72,7 +75,13 @@ Script:main() {
   install)
     #TIP: use «$script_prefix install» to ...
     #TIP:> $script_prefix install
-    do_install
+    install_stablediffusion
+    ;;
+  
+  norick)
+    #TIP: use «$script_prefix install» to ...
+    #TIP:> $script_prefix install
+    install_stablediffusion
     ;;
 
   image)
@@ -110,7 +119,7 @@ Script:main() {
 ## Put your helper scripts here
 #####################################################################
 
-do_install() {
+install_stablediffusion() {
   IO:log "install Stable Diffusion on MacOS"
   # based on https://twitter.com/levelsio/status/1565731907664478209
 
@@ -173,25 +182,53 @@ do_install() {
   fi
 
   IO:announce "Now running your first test AI image generation"
-  python3 scripts/txt2img.py --n_samples 1 --n_iter 1 --plms --prompt "new born baby kitten. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd"
+  python3 scripts/txt2img.py \
+          --n_samples 1 \
+          --n_iter 1 \
+          --plms \
+          --prompt "new born baby kitten. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd"
   open outputs/txt2img-samples
+  IO:print "Start creating with $0 -S <style> image <prompt>"
+  IO:print "Check https://promptomania.com/stable-diffusion-prompt-builder/"
   popd || exit
 
 }
 
 do_image() {
-    # shellcheck disable=SC2154
+  local prompt="$1"
   IO:log "image $prompt"
   pushd stable-diffusion || IO:die "Need stable-diffusion folder (did you run '$0 install' already?)"
     # shellcheck disable=SC2154
   case "$style" in
-    "photo")  prompt="$prompt. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd";;
-    "cinema")  prompt="$prompt. cinematic photo, highly detailed, cinematic lighting, ultra-detailed, ultrarealistic, photorealism, 8k, octane render";;
-    "comic")  prompt="$prompt. highly detailed, ultra-detailed, comic, drawing, hand-drawn";;
     "bnw")  prompt="$prompt. Monochrome, black and white, gray, grey, bnw, desaturated, no color, Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd";;
+    "cinema")  prompt="$prompt. cinematic photo, highly detailed, cinematic lighting, ultra-detailed, ultrarealistic, photorealism, 8k, octane render";;
+    "comic")  prompt="$prompt. highly detailed, ultra-detailed, comic, drawing, hand-drawn, trending in artstation, fantasy vivid colors";;
+    "manga")  prompt="$prompt. highly detailed, ultra-detailed, manga, anime, japanese, trending in artstation, fantasy vivid colors, ghibli inspired, 4k";;
+    "painting")  prompt="$prompt. highly detailed, ultra-detailed, matte painting, trending on artstation HQ, 4k";;
+    "photo")  prompt="$prompt. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd";;
   esac
+  local unique logfile
+  unique=$(<<< "$prompt" Str:digest 6)
+  logfile="log/txt2img.$unique.log"
+
   IO:debug "Prompt is: '$prompt'"
-  python3 scripts/txt2img.py --n_samples 1 --n_iter 1 --plms --prompt "$prompt"
+  [[ ! -d log ]] && mkdir log
+  IO:debug "Log in $logfile"
+  IO:progress "Start calculation ..."
+  local T0 T1 DURATION
+  T0=$SECONDS
+  # shellcheck disable=SC2154
+  python3 scripts/txt2img.py \
+    --n_samples 1 \
+    --ddim_steps "$steps" \
+    --H "$height" \
+    --W "$width" \
+    --n_iter 1 \
+    --plms \
+    --prompt "$prompt" &> "$logfile"
+  T1=$SECONDS
+  DURATION=$((T1 - T0))
+  IO:success "Calculation took $DURATION seconds"
   open outputs/txt2img-samples
   popd || exit
 
