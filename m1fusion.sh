@@ -51,12 +51,12 @@ flag|v|verbose|also show debug messages
 flag|f|force|do not ask for confirmation (always yes)
 option|l|log_dir|folder for log files |$HOME/log/$script_prefix
 option|t|tmp_dir|folder for temp files|/tmp/$script_prefix
-option|S|style|image style: photo/manga/comic|
+option|S|style|image style: cinema/photo/manga/comic/painting|
 option|W|width|output image width (max 512)|512
 option|H|height|output image height (max 512)|512
 option|N|steps|number of time steps|50
-choice|1|action|action to perform|install,image,check,env,update
-param|?|prompt|prompt
+choice|1|action|action to perform|install,uninstall,prompt,nsfw,check,env,update
+param|?|prompt|prompt to use for image generation
 " grep -v -e '^#' -e '^\s*$'
 }
 
@@ -73,21 +73,27 @@ Script:main() {
   action=$(Str:lower "$action")
   case $action in
   install)
-    #TIP: use «$script_prefix install» to ...
+    #TIP: use «$script_prefix install» to install Stable Diffusion
     #TIP:> $script_prefix install
     install_stablediffusion
     ;;
   
-  norick)
-    #TIP: use «$script_prefix install» to ...
-    #TIP:> $script_prefix install
-    install_stablediffusion
+  uninstall)
+    #TIP: use «$script_prefix uninstall» to delete all Stable Diffusion files (7GB)
+    #TIP:> $script_prefix uninstall
+    uninstall_stablediffusion
+    ;;
+  
+  nsfw)
+    #TIP: use «$script_prefix nsfw» to disable Stable Diffusion NSFW filter
+    #TIP:> $script_prefix nsfw
+    disable_nsfw_rickroll
     ;;
 
-  image)
-    #TIP: use «$script_prefix image» to ...
-    #TIP:> $script_prefix image
-    do_image "$prompt"
+  prompt)
+    #TIP: use «$script_prefix prompt» to create an image from a prompt
+    #TIP:> $script_prefix prompt "a small kitten"
+    do_prompt "$prompt"
     ;;
 
   check | env)
@@ -118,6 +124,16 @@ Script:main() {
 #####################################################################
 ## Put your helper scripts here
 #####################################################################
+
+uninstall_stablediffusion() {
+  IO:announce "This operation will delete the following folders:"
+  [[ -d "stable-diffusion" ]] && IO:announce "$(du -sh "stable-diffusion")"
+  [[ -d "$HOME/.cache/huggingface" ]] && IO:announce "$(du -sh "$HOME/.cache/huggingface")"
+  IO:confirm "Are you sure?" && (
+    [[ -d "stable-diffusion" ]] && rm -fr "stable-diffusion"
+    [[ -d "$HOME/.cache/huggingface" ]] && rm -fr "$HOME/.cache/huggingface"
+  )
+}
 
 install_stablediffusion() {
   IO:log "install Stable Diffusion on MacOS"
@@ -155,6 +171,8 @@ install_stablediffusion() {
   fi
 
   pushd "stable-diffusion" || IO:die "Git repo for stable-diffusion not found"
+  git pull
+
   IO:announce "Prepare virtual environment"
   mkdir -p models/ldm/stable-diffusion-v1/
   python3 -m pip install virtualenv
@@ -194,7 +212,35 @@ install_stablediffusion() {
 
 }
 
-do_image() {
+disable_nsfw_rickroll(){
+  IO:log "disable NSFW filter"
+  pushd stable-diffusion || IO:die "Need stable-diffusion folder (did you run '$0 install' already?)"
+
+  local txt2img="scripts/txt2img.py"
+  [[ ! -f "$txt2img" ]] && IO:die "Cannot find script [$txt2img]"
+
+  [[ ! -f "$txt2img.sfw" ]] && (
+    IO:announce "copy [$txt2img] to [$txt2img.sfw]"
+    cp "$txt2img" "$txt2img.sfw"
+  )
+
+  [[ ! -f "$txt2img.nsfw" ]] && (
+    IO:announce "modify [$txt2img] to [$txt2img.nsfw]"
+    < "$txt2img.sfw" awk -F'\n' '{
+    if($0 ~ /return x_checked_image, has_nsfw_concept/){
+      gsub(/has_nsfw_concept/,"1",$0);
+    }
+    print $0;
+    }' > "$txt2img.nsfw"
+    )
+
+  IO:success "Disabling the NSFW filter ..."
+  cp "$txt2img.nsfw" "$txt2img"
+
+}
+
+
+do_prompt() {
   local prompt="$1"
   IO:log "image $prompt"
   pushd stable-diffusion || IO:die "Need stable-diffusion folder (did you run '$0 install' already?)"
@@ -217,6 +263,8 @@ do_image() {
   IO:progress "Start calculation ..."
   local T0 T1 DURATION
   T0=$SECONDS
+  local line
+  local line_count=0
   # shellcheck disable=SC2154
   python3 scripts/txt2img.py \
     --n_samples 1 \
@@ -225,10 +273,15 @@ do_image() {
     --W "$width" \
     --n_iter 1 \
     --plms \
-    --prompt "$prompt" &> "$logfile"
+    --prompt "$prompt" \
+    |& tee "$logfile" \
+    | while read -r line ; do
+      line_count=$((line_count + 1))
+      IO:progress "$((SECONDS - T0)) / 250 seconds estimated ($line_count lines)"
+      done
   T1=$SECONDS
   DURATION=$((T1 - T0))
-  IO:success "Calculation took $DURATION seconds"
+  IO:success "Calculation took $DURATION seconds                          "
   open outputs/txt2img-samples
   popd || exit
 

@@ -14,9 +14,9 @@ Stable Diffusion for MacOS M1
 
 ```
 Program : m1fusion  by peter@forret.com
-Version : v1.0.1 (Sep  3 22:13:48 2022)
+Version : v1.0.1 (Sep  9 22:12:14 2022)
 Purpose : Stable Diffusion for MacOS M1
-Usage   : m1fusion [-h] [-q] [-v] [-f] [-l <log_dir>] [-t <tmp_dir>] [-s <style>] <action> <prompt?>
+Usage   : m1fusion [-h] [-q] [-v] [-f] [-l <log_dir>] [-t <tmp_dir>] [-S <style>] [-W <width>] [-H <height>] [-N <steps>] <action> <prompt?>
 Flags, options and parameters:
     -h|--help        : [flag] show usage [default: off]
     -q|--quiet       : [flag] no output [default: off]
@@ -24,9 +24,30 @@ Flags, options and parameters:
     -f|--force       : [flag] do not ask for confirmation (always yes) [default: off]
     -l|--log_dir <?> : [option] folder for log files   [default: /Users/pforret/log/m1fusion]
     -t|--tmp_dir <?> : [option] folder for temp files  [default: /tmp/m1fusion]
-    -s|--style <?>   : [option] image style: photo/manga/comic
-    <action>         : [choice] action to perform  [options: install,image,check,env,update]
-    <prompt>         : [parameter] prompt (optional)
+    -S|--style <?>   : [option] image style: cinema/photo/manga/comic/painting
+    -W|--width <?>   : [option] output image width (max 512)  [default: 512]
+    -H|--height <?>  : [option] output image height (max 512)  [default: 512]
+    -N|--steps <?>   : [option] number of time steps  [default: 50]
+    <action>         : [choice] action to perform  [options: install,uninstall,prompt,nsfw,check,env,update]
+    <prompt>         : [parameter] prompt to use for image generation (optional)
+                                
+### TIPS & EXAMPLES
+* use m1fusion install to install Stable Diffusion
+  m1fusion install
+* use m1fusion uninstall to delete all Stable Diffusion files (7GB)
+  m1fusion uninstall
+* use m1fusion nsfw to disable Stable Diffusion NSFW filter
+  m1fusion nsfw
+* use m1fusion prompt to create an image from a prompt
+  m1fusion prompt "a small kitten"
+* use m1fusion check to check if this script is ready to execute and what values the options/flags are
+  m1fusion check
+* use m1fusion env to generate an example .env file
+  m1fusion env > .env
+* use m1fusion update to update to the latest version
+  m1fusion update
+* >>> bash script created with pforret/bashew
+* >>> for bash development, also check IO:print pforret/setver and pforret/progressbar
 ```
 
 ## ⚡️ Examples
