@@ -30,7 +30,7 @@ Flags, options and parameters:
     -N|--steps <?>   : [option] number of time steps  [default: 50]
     <action>         : [choice] action to perform  [options: install,uninstall,prompt,nsfw,check,env,update]
     <prompt>         : [parameter] prompt to use for image generation (optional)
-                                  @github.com:pforret/m1fusion.git                                             
+
 ### TIPS & EXAMPLES
 * use m1fusion install to install Stable Diffusion
   m1fusion install
@@ -65,6 +65,7 @@ Flags, options and parameters:
 > m1fusion prompt "new born kitten"
 > m1fusion --style cinema prompt "new born kitten"
 # generate images
+# get inspiration on e.g. https://prompthero.com/
 ```
 
 ## 🚀 Installation

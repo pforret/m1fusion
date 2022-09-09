@@ -199,12 +199,15 @@ install_stablediffusion() {
     IO:announce "Model model.ckpt found! $(du -h "$model_ckpt")"
   fi
 
+  local logfile="log/stable-diffusion.install.log"
+  IO:debug "Logfile: $logfile"
+
   IO:announce "Now running your first test AI image generation"
   python3 scripts/txt2img.py \
           --n_samples 1 \
           --n_iter 1 \
           --plms \
-          --prompt "new born baby kitten. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd"
+          --prompt "modern building. Hyper Detail, 8K, HD, Octane Rendering, Unreal Engine, V-Ray, full hd" &> "$logfile"
   open outputs/txt2img-samples
   IO:print "Start creating with $0 -S <style> image <prompt>"
   IO:print "Check https://promptomania.com/stable-diffusion-prompt-builder/"
@@ -242,6 +245,7 @@ disable_nsfw_rickroll(){
 
 do_prompt() {
   local prompt="$1"
+  [[ -z "$prompt" ]] && IO:die "Need a prompt"
   IO:log "image $prompt"
   pushd stable-diffusion || IO:die "Need stable-diffusion folder (did you run '$0 install' already?)"
     # shellcheck disable=SC2154
@@ -279,7 +283,7 @@ do_prompt() {
       # shellcheck disable=SC2034
       local ignore_line="$line"
       line_count=$((line_count + 1))
-      IO:progress "$((SECONDS - T0)) / 250 seconds estimated ($line_count lines)"
+      IO:progress "$((SECONDS - T0)) / 200 seconds estimated ($line_count lines)"
       done
   T1=$SECONDS
   DURATION=$((T1 - T0))
