@@ -14,7 +14,7 @@ Stable Diffusion for MacOS M1
 
 ```
 Program : m1fusion  by peter@forret.com
-Version : v1.0.1 (Sep  9 22:12:14 2022)
+Version : v1.1.0 (Sep  9 22:12:14 2022)
 Purpose : Stable Diffusion for MacOS M1
 Usage   : m1fusion [-h] [-q] [-v] [-f] [-l <log_dir>] [-t <tmp_dir>] [-S <style>] [-W <width>] [-H <height>] [-N <steps>] <action> <prompt?>
 Flags, options and parameters:
@@ -30,7 +30,7 @@ Flags, options and parameters:
     -N|--steps <?>   : [option] number of time steps  [default: 50]
     <action>         : [choice] action to perform  [options: install,uninstall,prompt,nsfw,check,env,update]
     <prompt>         : [parameter] prompt to use for image generation (optional)
-                                
+                                  @github.com:pforret/m1fusion.git                                             
 ### TIPS & EXAMPLES
 * use m1fusion install to install Stable Diffusion
   m1fusion install
@@ -55,8 +55,16 @@ Flags, options and parameters:
 ```bash
 > m1fusion install
 # do the installation: MacOS, brew, python, git ...
-> m1fusion image "new born kitten"
-> m1fusion --style cinema image "new born kitten"
+
+> m1fusion uninstall
+# remove all Stable Diffusion files
+
+> m1fusion nsfw
+# disable the Rickroll NSFW filter
+
+> m1fusion prompt "new born kitten"
+> m1fusion --style cinema prompt "new born kitten"
+# generate images
 ```
 
 ## 🚀 Installation
