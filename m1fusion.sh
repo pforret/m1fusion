@@ -276,6 +276,8 @@ do_prompt() {
     --prompt "$prompt" \
     |& tee "$logfile" \
     | while read -r line ; do
+      # shellcheck disable=SC2034
+      local ignore_line="$line"
       line_count=$((line_count + 1))
       IO:progress "$((SECONDS - T0)) / 250 seconds estimated ($line_count lines)"
       done
